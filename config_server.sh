@@ -63,23 +63,24 @@ setup_application(){
 configure_nginx(){
   current_progress "Configuring Nginx"
 
-  config_server="
-    server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
+cat <<EOF > ./authorshavenconf
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
 
-        index index.html index.htm index.nginx-debian.html;
-        server_name ${Domain} ${www_Domain};
+    index index.html index.htm index.nginx-debian.html;
+    server_name ${Domain} ${www_Domain};
 
-        location / {
-                proxy_pass http://127.0.0.1:5000;
-                try_files $uri $uri/ =404;
-        }
-    }"
-  
-  echo "${config_server}" | sudo tee /etc/nginx/sites-available/authorshaven
+    location / {
+            proxy_pass http://127.0.0.1:5000;
+            try_files $uri $uri/ =404;
+    }
+}
+EOF
 
-  sudo ln -s /etc/nginx/sites-available/authorshaven /etc/nginx/sites-enabled/authorshaven
+  sudo cp authorshavenconf /etc/nginx/sites-available/authorshavenconf
+
+  sudo ln -s /etc/nginx/sites-available/authorshavenconf /etc/nginx/sites-enabled/authorshavenconf
   sudo rm -r /etc/nginx/sites-enabled/default
 
   sudo systemctl restart nginx.service
@@ -101,7 +102,6 @@ main(){
    configure_nginx
    configure_SSL
 }
-
 
 # Check if environment variables are set
 if [[ $Domain && $www_Domain && $GitHub_Repo && $Email  ]]; then
