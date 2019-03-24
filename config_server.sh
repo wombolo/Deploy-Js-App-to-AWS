@@ -1,23 +1,48 @@
 #!/bin/bash
-source .env
+source ./.env
+
+current_progress(){
+  echo ""
+  echo -e "\033[0;32m ========== ${1} =========== \033[0m"
+}
 
 install_software(){
+  current_progress "Installing Node, Nginx, npm"
   sudo apt-get install -y nginx
-
   curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh
   sudo bash nodesource_setup.sh 
   sudo apt-get install -y nodejs
-
   sudo npm install -g npm@latest
 }
 
+
+run_app_in_background() {
+start_script='
+  {
+    "apps": [
+      {
+        "name": "authors_haven",
+        "script": "npm",
+        "args": "run start"
+      }
+    ]
+  }'
+  current_progress "Install PM2 to run app in background"
+  sudo npm install pm2 -g
+
+  echo "${start_script}" > ./start_script.config.json
+  pm2 start start_script.config.json
+}
+
+
 setup_application(){
+  current_progress "Downloading repo & installing dependencies"
+
   git clone ${GitHub_Repo} authors_haven/
   cd authors_haven/
 
-  #app .env
-  app_env="
-  API_BASE_URL = https://krypton-ah-stage.herokuapp.com/api/v1
+  #JSapp .env
+  app_env="API_BASE_URL = https://krypton-ah-stage.herokuapp.com/api/v1
   BASE_URL_CB = https://krypton-ah-fe-stage.herokuapp.com
   FACEBOOK_URL = https://krypton-ah-stage.herokuapp.com/api/v1/auth/facebook
   GOOGLE_URL = https://krypton-ah-stage.herokuapp.com/api/v1/auth/google
@@ -30,28 +55,26 @@ setup_application(){
    npm install
    npm run-script build
 
-   npm run-script start &
+   #Run application in background
+   run_app_in_background
+#   npm run-script start &
 }
 
 configure_nginx(){
+  current_progress "Configuring Nginx"
+
   config_server="
     server {
-            listen 80 default_server;
-            listen [::]:80 default_server;
-            root /home/vagrant/authors_haven/dist;
+        listen 80 default_server;
+        listen [::]:80 default_server;
 
-            # Add index.php to the list if you are using PHP
-            index index.html index.htm index.nginx-debian.html;
+        index index.html index.htm index.nginx-debian.html;
+        server_name ${Domain} ${www_Domain};
 
-            server_name ${Domain} ${www_Domain};
-
-            location / {
-                    proxy_pass http://127.0.0.1:5000;
-
-                    # First attempt to serve request as file, then
-                    # as directory, then fall back to displaying a 404.
-                    try_files $uri $uri/ =404;
-            }
+        location / {
+                proxy_pass http://127.0.0.1:5000;
+                try_files $uri $uri/ =404;
+        }
     }"
   
   echo "${config_server}" | sudo tee /etc/nginx/sites-available/authorshaven
@@ -63,7 +86,7 @@ configure_nginx(){
 }
 
 configure_SSL() {
-  echo "Now Configuring SSL Certificate"
+  current_progress "Now Configuring SSL Certificate"
   sudo apt-get update
   sudo apt-get install software-properties-common
   sudo add-apt-repository ppa:certbot/certbot -y
@@ -79,4 +102,10 @@ main(){
    configure_SSL
 }
 
-main
+
+# Check if environment variables are set
+if [[ $Domain && $www_Domain && $GitHub_Repo && $Email  ]]; then
+    main
+ else
+    echo -e "\033[0;31m ========== Please set up .env variables =========== \033[0m"
+fi
