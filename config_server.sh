@@ -8,7 +8,11 @@ current_progress(){
 
 install_software(){
   current_progress "Installing Node, Nginx, npm"
+  sudo apt-get update
+
   sudo apt-get install -y nginx
+  sudo systemctl restart nginx.service
+
   curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh
   sudo bash nodesource_setup.sh 
   sudo apt-get install -y nodejs
