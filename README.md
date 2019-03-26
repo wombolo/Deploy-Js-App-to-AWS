@@ -1,5 +1,6 @@
 # # Deploy Js App to AWS
-Deploy Js app to AWS using NGINX as reverse proxy server
+Deploy Js app to AWS using NGINX as reverse proxy server.
+Full video description available on [Google Drive](https://drive.google.com/open?id=1zncIc65t7dyZ8pPjuBk7ZJssEgvSBoPQ)
 
 ## Getting Started
 These instructions will allow you setup a javaScript app in the cloud using AWS-EC2 for development and testing purposes. 
