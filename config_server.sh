@@ -1,11 +1,13 @@
 #!/bin/bash
 source ./.env
 
+# display current progress
 current_progress(){
   echo ""
   echo -e "\033[0;32m ========== ${1} =========== \033[0m"
 }
 
+#Installing Node, Nginx, npm
 install_software(){
   current_progress "Installing Node, Nginx, npm"
   sudo apt-get update
@@ -19,7 +21,7 @@ install_software(){
   sudo npm install -g npm@latest
 }
 
-
+#Install PM2 & run app in background
 run_app_in_background() {
 start_script='
   {
@@ -38,7 +40,7 @@ start_script='
   pm2 start start_script.config.json
 }
 
-
+#Download repo, install dependencies & configure node app
 setup_application(){
   current_progress "Downloading repo & installing dependencies"
 
@@ -61,9 +63,9 @@ setup_application(){
 
    #Run application in background
    run_app_in_background
-#   npm run-script start &
 }
 
+#Configuring Nginx
 configure_nginx(){
   current_progress "Configuring Nginx"
 
@@ -90,6 +92,7 @@ EOF
   sudo systemctl restart nginx.service
 }
 
+#Configuring SSL Certificate
 configure_SSL() {
   current_progress "Now Configuring SSL Certificate"
   sudo apt-get update
@@ -100,6 +103,7 @@ configure_SSL() {
   sudo certbot --nginx  -d ${Domain} -d ${www_Domain} -m ${Email} --agree-tos --non-interactive
 }
 
+#Main function
 main(){
    install_software
    setup_application
